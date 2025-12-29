@@ -5,7 +5,16 @@
   "author": "",
   "private": true,
   "license": "UNLICENSED",
+  "engines": {
+    "node": ">=24.0.0",
+    "pnpm": ">=9.0.0"
+  },
   "scripts": {
+    "check-node": "node scripts/check-node-version.js",
+    "prestart": "pnpm run check-node",
+    "prestart:dev": "pnpm run check-node",
+    "prestart:debug": "pnpm run check-node",
+    "prebuild": "pnpm run check-node",
     "build": "nest build",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
     "start": "nest start",

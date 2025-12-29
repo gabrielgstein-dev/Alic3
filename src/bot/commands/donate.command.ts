@@ -13,7 +13,7 @@ export class DonateCommand {
 
   constructor(private configService: ConfigService) {
     const baseUrl = this.configService.get<string>('BASE_URL') || 'http://localhost:3000';
-    this.donationUrl = `${baseUrl}/livepix/donate`;
+    this.donationUrl = `${baseUrl}/donate`;
   }
 
   createDonateEmbed() {

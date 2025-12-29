@@ -1,8 +1,8 @@
-# Configuração Livepix + Discord
+# Configuração Sistema de Doações
 
 ## Integração implementada
 
-A integração permite que quando alguém faça uma doação via Livepix, automaticamente receba a role "Patreon" no Discord.
+Sistema de doações integrado com processador de pagamentos (LivePix), que automaticamente concede roles de apoiador no Discord.
 
 ## Configuração
 
@@ -32,16 +32,38 @@ DONATION_LOG_CHANNEL_ID=id_do_canal_de_logs (opcional)
 
 Após deployar sua aplicação, você precisa registrar o webhook no Livepix.
 
-#### Usando a API do Livepix:
+#### Passo 1: Obter Token OAuth com scope `webhooks`
+
+```bash
+curl -X POST https://oauth.livepix.gg/oauth2/token \
+  -H "Content-Type: application/x-www-form-urlencoded" \
+  -d "grant_type=client_credentials" \
+  -d "client_id=SEU_LIVEPIX_CLIENT_ID" \
+  -d "client_secret=SEU_LIVEPIX_CLIENT_SECRET" \
+  -d "scope=account:read wallet:read webhooks"
+```
+
+#### Passo 2: Criar o Webhook
+
+Use o token obtido acima:
 
 ```bash
 curl -X POST https://api.livepix.gg/v2/webhooks \
-  -H "Authorization: Bearer SEU_TOKEN" \
+  -H "Authorization: Bearer SEU_TOKEN_AQUI" \
   -H "Content-Type: application/json" \
-  -d '{"url": "https://seu-dominio.com/livepix/webhook"}'
+  -d '{"url": "https://seu-dominio.com/webhook"}'
 ```
 
-**Importante:** A URL do webhook deve ser acessível publicamente (HTTPS recomendado).
+#### Passo 3: Verificar Webhooks Cadastrados (Opcional)
+
+```bash
+curl -X GET https://api.livepix.gg/v2/webhooks \
+  -H "Authorization: Bearer SEU_TOKEN_AQUI"
+```
+
+**Importante:** 
+- A URL do webhook deve ser acessível publicamente (HTTPS obrigatório em produção)
+- Para testes locais, use ngrok: `ngrok http 3000`
 
 ### 4. Configurar Bot do Discord
 
@@ -58,21 +80,21 @@ E ativar os seguintes **Privileged Gateway Intents**:
 
 **Fluxo completo:**
 
-1. **Usuário acessa** `https://seu-dominio.com/livepix/donate`
+1. **Usuário acessa** `https://seu-dominio.com/donate`
 2. **Preenche o formulário** com:
    - Seu ID do Discord (copiado do próprio perfil)
    - Valor da doação em R$
 3. **Clica em "Continuar para Pagamento"**
 4. **É redirecionado** para a página de pagamento do Livepix
 5. **Realiza o pagamento** (PIX, cartão, etc)
-6. **Livepix envia webhook** para `POST /livepix/webhook`
+6. **Processador envia webhook** para `POST /webhook`
 7. **Sistema busca detalhes** do pagamento na API
 8. **Role Patreon é adicionada** automaticamente ao usuário
 9. **Log é enviado** no canal de doações (opcional)
 
 ### 6. Compartilhando o Link de Doação
 
-Você pode compartilhar o link `https://seu-dominio.com/livepix/donate` em:
+Você pode compartilhar o link `https://seu-dominio.com/donate` em:
 - Mensagens fixadas no Discord
 - Descrição do servidor
 - Canais específicos
@@ -84,8 +106,8 @@ O formulário já explica ao usuário como copiar o ID do Discord dele.
 
 1. Inicie o servidor: `yarn start:dev`
 2. Use uma ferramenta como ngrok para expor sua aplicação: `ngrok http 3000`
-3. Configure o webhook no Livepix com a URL do ngrok: `https://xxx.ngrok.io/livepix/webhook`
-4. Acesse `http://localhost:3000/livepix/donate` (ou use a URL do ngrok)
+3. Configure o webhook no processador com a URL do ngrok: `https://xxx.ngrok.io/webhook`
+4. Acesse `http://localhost:3000/donate` (ou use a URL do ngrok)
 5. Preencha o formulário com:
    - Seu ID do Discord
    - Valor de teste (ex: R$ 1,00)

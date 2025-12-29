@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Adicionar Alic3 ao Servidor</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .container {
+      background: white;
+      border-radius: 20px;
+      padding: 50px 40px;
+      max-width: 600px;
+      width: 100%;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+      text-align: center;
+    }
+
+    .bot-avatar {
+      width: 120px;
+      height: 120px;
+      border-radius: 50%;
+      margin: 0 auto 20px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 60px;
+      box-shadow: 0 8px 24px rgba(102, 126, 234, 0.4);
+    }
+
+    h1 {
+      color: #2d3436;
+      margin-bottom: 10px;
+      font-size: 32px;
+      font-weight: 700;
+    }
+
+    .subtitle {
+      color: #636e72;
+      margin-bottom: 30px;
+      font-size: 16px;
+      line-height: 1.6;
+    }
+
+    .features {
+      text-align: left;
+      margin: 30px 0;
+      background: #f8f9fa;
+      padding: 25px;
+      border-radius: 12px;
+    }
+
+    .feature {
+      display: flex;
+      align-items: center;
+      margin-bottom: 15px;
+      font-size: 15px;
+      color: #2d3436;
+    }
+
+    .feature:last-child {
+      margin-bottom: 0;
+    }
+
+    .feature-icon {
+      font-size: 24px;
+      margin-right: 12px;
+      min-width: 30px;
+    }
+
+    .permissions {
+      background: #fff3cd;
+      border: 2px solid #ffc107;
+      border-radius: 10px;
+      padding: 15px;
+      margin: 25px 0;
+      font-size: 13px;
+      color: #856404;
+    }
+
+    .permissions strong {
+      display: block;
+      margin-bottom: 8px;
+      font-size: 14px;
+    }
+
+    .permissions ul {
+      list-style: none;
+      padding-left: 0;
+    }
+
+    .permissions li {
+      padding: 3px 0;
+    }
+
+    .permissions li:before {
+      content: "✓ ";
+      font-weight: bold;
+      margin-right: 5px;
+    }
+
+    .invite-button {
+      display: inline-block;
+      padding: 18px 40px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      text-decoration: none;
+      border-radius: 12px;
+      font-size: 18px;
+      font-weight: 600;
+      transition: all 0.3s;
+      box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+      margin-top: 10px;
+    }
+
+    .invite-button:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 10px 30px rgba(102, 126, 234, 0.5);
+    }
+
+    .invite-button:active {
+      transform: translateY(-1px);
+    }
+
+    .footer {
+      margin-top: 30px;
+      padding-top: 20px;
+      border-top: 1px solid #dfe6e9;
+      font-size: 13px;
+      color: #95a5a6;
+    }
+
+    .footer a {
+      color: #667eea;
+      text-decoration: none;
+      font-weight: 500;
+    }
+
+    .footer a:hover {
+      text-decoration: underline;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container">
+    <div class="bot-avatar">🤖</div>
+
+    <h1>Adicionar Alic3</h1>
+    <p class="subtitle">
+      Bot completo com sistema de tickets, doações automáticas via LivePix e muito mais!
+    </p>
+
+    <div class="features">
+      <div class="feature">
+        <span class="feature-icon">🎫</span>
+        <span><strong>Sistema de Tickets</strong> - Suporte organizado e eficiente</span>
+      </div>
+      <div class="feature">
+        <span class="feature-icon">💰</span>
+        <span><strong>Doações Automáticas</strong> - Integração com LivePix e roles automáticas</span>
+      </div>
+      <div class="feature">
+        <span class="feature-icon">⭐</span>
+        <span><strong>Sistema de Apoiadores</strong> - 3 níveis de apoio com benefícios</span>
+      </div>
+      <div class="feature">
+        <span class="feature-icon">🛡️</span>
+        <span><strong>Gestão de Membros</strong> - Ferramentas para staff</span>
+      </div>
+    </div>
+
+    <div class="permissions">
+      <strong>⚠️ Permissões necessárias:</strong>
+      <ul>
+        <li>Gerenciar Cargos (para adicionar roles de apoiador)</li>
+        <li>Gerenciar Canais (para sistema de tickets)</li>
+        <li>Ler/Enviar Mensagens</li>
+        <li>Gerenciar Webhooks</li>
+      </ul>
+    </div>
+
+    <a href="INVITE_URL_PLACEHOLDER" class="invite-button" id="inviteBtn">
+      🚀 Adicionar ao Servidor
+    </a>
+
+    <div class="footer">
+      Precisa de ajuda? <a href="/livepix/donate">Apoie o projeto</a>
+    </div>
+  </div>
+
+  <script>
+    const clientId = '588752805091868682';
+    const permissions = '268445776';
+    const scope = 'bot applications.commands';
+
+    const inviteUrl = `https://discord.com/api/oauth2/authorize?client_id=${clientId}&permissions=${permissions}&scope=${encodeURIComponent(scope)}`;
+
+    document.getElementById('inviteBtn').href = inviteUrl;
+  </script>
+</body>
+
+</html>

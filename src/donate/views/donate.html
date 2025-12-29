@@ -1,0 +1,557 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Apoiar Servidor - The Sims</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #a8e6cf 0%, #ffd3b6 100%);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .container {
+      background: white;
+      border-radius: 16px;
+      padding: 35px 30px;
+      max-width: 440px;
+      width: 100%;
+      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+    }
+
+    h1 {
+      color: #2d3436;
+      margin-bottom: 8px;
+      font-size: 26px;
+      font-weight: 600;
+      text-align: center;
+    }
+
+    .subtitle {
+      color: #636e72;
+      margin-bottom: 30px;
+      font-size: 13px;
+      text-align: center;
+      line-height: 1.5;
+    }
+
+    .form-group {
+      margin-bottom: 22px;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 8px;
+      color: #2d3436;
+      font-weight: 500;
+      font-size: 13px;
+      letter-spacing: 0.3px;
+    }
+
+    input {
+      width: 100%;
+      padding: 12px 14px;
+      border: 1.5px solid #dfe6e9;
+      border-radius: 8px;
+      font-size: 15px;
+      transition: all 0.2s;
+      background: #f8f9fa;
+    }
+
+    input:focus {
+      outline: none;
+      border-color: #a8e6cf;
+      background: white;
+    }
+
+    .hint {
+      font-size: 11px;
+      color: #b2bec3;
+      margin-top: 4px;
+    }
+
+    button {
+      width: 100%;
+      padding: 14px;
+      background: linear-gradient(135deg, #74b9ff 0%, #a29bfe 100%);
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+      margin-top: 10px;
+    }
+
+    button:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 6px 20px rgba(116, 185, 255, 0.4);
+    }
+
+    button:active {
+      transform: translateY(0);
+    }
+
+    button:disabled {
+      background: #b2bec3;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .error {
+      background: #fee;
+      border: 2px solid #fcc;
+      color: #c33;
+      padding: 12px;
+      border-radius: 10px;
+      margin-bottom: 20px;
+      display: none;
+    }
+
+    .success {
+      background: #e8f5e9;
+      border: 2px solid #a5d6a7;
+      color: #2e7d32;
+      padding: 12px;
+      border-radius: 10px;
+      margin-bottom: 20px;
+      display: none;
+    }
+
+    .step {
+      display: none;
+    }
+
+    .step.active {
+      display: block;
+    }
+
+    .user-preview {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      border-radius: 12px;
+      padding: 20px;
+      margin-bottom: 25px;
+      text-align: center;
+      color: white;
+      box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+    }
+
+    .user-avatar {
+      width: 80px;
+      height: 80px;
+      border-radius: 50%;
+      border: 4px solid white;
+      margin: 0 auto 12px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    }
+
+    .user-name {
+      font-size: 20px;
+      font-weight: 700;
+      margin-bottom: 4px;
+      text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    }
+
+    .user-id {
+      font-size: 12px;
+      opacity: 0.9;
+      font-family: 'Courier New', monospace;
+    }
+
+    .step-indicator {
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      margin-bottom: 25px;
+    }
+
+    .step-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: #dfe6e9;
+      transition: all 0.3s;
+    }
+
+    .step-dot.active {
+      background: #667eea;
+      width: 24px;
+      border-radius: 5px;
+    }
+
+    .back-button {
+      background: #95a5a6;
+      margin-top: 10px;
+    }
+
+    .back-button:hover {
+      background: #7f8c8d;
+      box-shadow: 0 6px 20px rgba(149, 165, 166, 0.4);
+    }
+
+    .loading {
+      display: none;
+      text-align: center;
+      padding: 20px;
+    }
+
+    .spinner {
+      border: 3px solid #f3f3f3;
+      border-top: 3px solid #667eea;
+      border-radius: 50%;
+      width: 40px;
+      height: 40px;
+      animation: spin 1s linear infinite;
+      margin: 0 auto;
+    }
+
+    @keyframes spin {
+      0% {
+        transform: rotate(0deg);
+      }
+
+      100% {
+        transform: rotate(360deg);
+      }
+    }
+
+    .tier-cards {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 28px;
+    }
+
+    .tier-card {
+      flex: 1;
+      background: #f8f9fa;
+      border-radius: 10px;
+      padding: 14px 10px;
+      border: 2px solid transparent;
+      transition: all 0.25s ease;
+      text-align: center;
+      cursor: default;
+    }
+
+    .tier-card.active {
+      border-color: #74b9ff;
+      background: #e3f2fd;
+      box-shadow: 0 4px 12px rgba(116, 185, 255, 0.25);
+    }
+
+    .tier-card.active .tier-icon {
+      transform: scale(1.15);
+    }
+
+    .tier-icon {
+      font-size: 32px;
+      margin-bottom: 6px;
+      display: block;
+      transition: transform 0.2s;
+    }
+
+    .tier-name {
+      font-size: 13px;
+      font-weight: 600;
+      color: #2d3436;
+      margin-bottom: 3px;
+    }
+
+    .tier-value {
+      font-size: 11px;
+      color: #636e72;
+      font-weight: 400;
+    }
+
+    .value-preview {
+      background: #e3f2fd;
+      border-left: 3px solid #74b9ff;
+      padding: 10px 14px;
+      border-radius: 6px;
+      margin-top: 8px;
+      display: none;
+      font-size: 12px;
+      color: #2d3436;
+      line-height: 1.6;
+    }
+
+    .value-preview.show {
+      display: block;
+    }
+
+    .help-text {
+      background: #fef5e7;
+      padding: 10px 12px;
+      border-radius: 6px;
+      margin-top: 6px;
+      font-size: 11px;
+      color: #636e72;
+      line-height: 1.5;
+    }
+
+    .help-text a {
+      color: #74b9ff;
+      text-decoration: none;
+      font-weight: 500;
+    }
+
+    .section-title {
+      font-size: 13px;
+      font-weight: 600;
+      color: #2d3436;
+      margin-bottom: 12px;
+      text-align: center;
+      letter-spacing: 0.5px;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container">
+    <h1>💜 Apoie o Servidor</h1>
+    <p class="subtitle">Escolha seu apoio e ganhe uma role especial</p>
+
+    <div class="section-title">NÍVEIS DE APOIO</div>
+
+    <div class="tier-cards">
+      <div class="tier-card" data-tier="supporter" data-min="5" data-max="19.99">
+        <div class="tier-icon">⭐</div>
+        <div class="tier-name">Apoiador</div>
+        <div class="tier-value">R$ 5+</div>
+      </div>
+
+      <div class="tier-card" data-tier="golden" data-min="20" data-max="49.99">
+        <div class="tier-icon">🥇</div>
+        <div class="tier-name">Dourado</div>
+        <div class="tier-value">R$ 20+</div>
+      </div>
+
+      <div class="tier-card" data-tier="diamond" data-min="50" data-max="999999">
+        <div class="tier-icon">💎</div>
+        <div class="tier-name">Diamante</div>
+        <div class="tier-value">R$ 50+</div>
+      </div>
+    </div>
+
+    <div class="step-indicator">
+      <div class="step-dot active" id="dot1"></div>
+      <div class="step-dot" id="dot2"></div>
+    </div>
+
+    <div id="error" class="error"></div>
+    <div id="success" class="success"></div>
+    <div id="loading" class="loading">
+      <div class="spinner"></div>
+      <p style="margin-top: 15px; color: #666;">Processando...</p>
+    </div>
+
+    <div id="step1" class="step active">
+      <form id="verifyForm">
+        <div class="form-group">
+          <label for="discordId">🆔 Seu ID do Discord</label>
+          <input type="text" id="discordId" name="discordId" placeholder="123456789012345678" pattern="[0-9]{17,19}"
+            required>
+          <div class="help-text">
+            💡 Ative o Modo Desenvolvedor no Discord → Clique direito no seu perfil → Copiar ID
+          </div>
+        </div>
+        <button type="submit">🔍 Verificar Perfil</button>
+      </form>
+    </div>
+
+    <div id="step2" class="step">
+      <div id="userPreview" class="user-preview"></div>
+
+      <form id="donationForm">
+        <div class="form-group">
+          <label for="amount">💰 Valor (R$)</label>
+          <input type="number" id="amount" name="amount" placeholder="Mínimo R$ 5,00" min="5" step="0.01" required>
+          <div id="valuePreview" class="value-preview"></div>
+        </div>
+
+        <button type="submit">🚀 Continuar para Pagamento</button>
+        <button type="button" class="back-button" onclick="goToStep1()">← Voltar</button>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    let verifiedUserId = null;
+    let verifiedUserData = null;
+
+    function goToStep1() {
+      document.getElementById('step1').classList.add('active');
+      document.getElementById('step2').classList.remove('active');
+      document.getElementById('dot1').classList.add('active');
+      document.getElementById('dot2').classList.remove('active');
+      verifiedUserId = null;
+      verifiedUserData = null;
+    }
+
+    function goToStep2(userData) {
+      document.getElementById('step1').classList.remove('active');
+      document.getElementById('step2').classList.add('active');
+      document.getElementById('dot1').classList.remove('active');
+      document.getElementById('dot2').classList.add('active');
+
+      const avatarUrl = userData.avatar
+        ? `https://cdn.discordapp.com/avatars/${userData.id}/${userData.avatar}.png?size=128`
+        : `https://cdn.discordapp.com/embed/avatars/${parseInt(userData.discriminator) % 5}.png`;
+
+      const displayName = userData.displayName || userData.username;
+      const fullUsername = userData.discriminator !== '0'
+        ? `${userData.username}#${userData.discriminator}`
+        : `@${userData.username}`;
+
+      document.getElementById('userPreview').innerHTML = `
+        <img src="${avatarUrl}" alt="Avatar" class="user-avatar" />
+        <div class="user-name">${displayName}</div>
+        <div class="user-id">${fullUsername}</div>
+        <div style="margin-top: 10px; font-size: 13px; opacity: 0.9;">✅ Este é você?</div>
+      `;
+    }
+
+    document.getElementById('verifyForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const discordId = document.getElementById('discordId').value;
+      const errorDiv = document.getElementById('error');
+      const successDiv = document.getElementById('success');
+      const loadingDiv = document.getElementById('loading');
+      const step1 = document.getElementById('step1');
+
+      errorDiv.style.display = 'none';
+      successDiv.style.display = 'none';
+      loadingDiv.style.display = 'block';
+      step1.style.display = 'none';
+
+      try {
+        const response = await fetch(`/verify-discord/${discordId}`);
+
+        if (!response.ok) {
+          const error = await response.json();
+          throw new Error(error.message || 'Usuário não encontrado');
+        }
+
+        const data = await response.json();
+        verifiedUserId = discordId;
+        verifiedUserData = data.user;
+
+        loadingDiv.style.display = 'none';
+        goToStep2(data.user);
+      } catch (error) {
+        errorDiv.textContent = ' ' + (error.message || 'Usuário não encontrado no servidor. Verifique se você está no servidor e se o ID está correto.');
+        errorDiv.style.display = 'block';
+        loadingDiv.style.display = 'none';
+        step1.style.display = 'block';
+      }
+    });
+
+    const amountInput = document.getElementById('amount');
+    const valuePreview = document.getElementById('valuePreview');
+    const tierCards = document.querySelectorAll('.tier-card');
+
+    amountInput.addEventListener('input', function () {
+      const value = parseFloat(this.value);
+
+      tierCards.forEach(card => card.classList.remove('active'));
+
+      if (!value || isNaN(value)) {
+        valuePreview.classList.remove('show');
+        return;
+      }
+
+      let roleName = '';
+      let roleIcon = '';
+      let tierCard = null;
+
+      if (value < 5) {
+        valuePreview.innerHTML = ' <strong>Valor abaixo do mínimo!</strong><br>Para receber uma role de Apoiador, doe no mínimo R$ 5,00';
+        valuePreview.style.borderLeftColor = '#ff5252';
+        valuePreview.style.background = '#ffebee';
+        valuePreview.classList.add('show');
+        return;
+      } else if (value >= 50) {
+        roleName = 'Apoiador Diamante';
+        roleIcon = '';
+        tierCard = document.querySelector('[data-tier="diamond"]');
+      } else if (value >= 20) {
+        roleName = 'Apoiador Dourado';
+        roleIcon = '';
+        tierCard = document.querySelector('[data-tier="golden"]');
+      } else {
+        roleName = 'Apoiador';
+        roleIcon = '';
+        tierCard = document.querySelector('[data-tier="supporter"]');
+      }
+
+      if (tierCard) {
+        tierCard.classList.add('active');
+      }
+
+      valuePreview.innerHTML = ' <strong>Você vai receber:</strong> ' + roleIcon + ' <strong>' + roleName + '</strong><br> Valor: R$ ' + value.toFixed(2);
+      valuePreview.style.borderLeftColor = '#667eea';
+      valuePreview.style.background = '#f0f4ff';
+      valuePreview.classList.add('show');
+    });
+
+    document.getElementById('donationForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      if (!verifiedUserId) {
+        alert('Erro: usuário não verificado');
+        return;
+      }
+
+      const amount = parseFloat(document.getElementById('amount').value);
+      const errorDiv = document.getElementById('error');
+      const loadingDiv = document.getElementById('loading');
+      const step2 = document.getElementById('step2');
+
+      errorDiv.style.display = 'none';
+      loadingDiv.style.display = 'block';
+      step2.style.display = 'none';
+
+      try {
+        const response = await fetch('/create-donation', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ discordId: verifiedUserId, amount }),
+        });
+
+        if (!response.ok) {
+          throw new Error('Erro ao criar doação');
+        }
+
+        const data = await response.json();
+
+        if (data.paymentUrl) {
+          window.location.href = data.paymentUrl;
+        } else {
+          throw new Error('URL de pagamento não recebida');
+        }
+      } catch (error) {
+        errorDiv.textContent = '❌ Erro ao processar doação. Tente novamente.';
+        errorDiv.style.display = 'block';
+        loadingDiv.style.display = 'none';
+        step2.style.display = 'block';
+      }
+    });
+  </script>
+</body>
+
+</html>

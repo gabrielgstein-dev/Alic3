@@ -48,23 +48,27 @@ export class BotService implements OnModuleInit {
       
       if (message.content === '!donate' || message.content === '!doar') {
         const baseUrl = this.configService.get<string>('BASE_URL') || 'http://localhost:3000';
-        const donationUrl = `${baseUrl}/livepix/donate`;
+        const donationUrl = `${baseUrl}/donate`;
         
         const embed = {
           color: 0x667eea,
           title: '💜 Apoie o Servidor',
           description:
-            'Faça uma doação e receba a role **Patreon** automaticamente!\n\n' +
+            'Faça uma doação e receba sua role de **Apoiador** automaticamente!\n\n' +
+            '**🎁 Benefícios por Nível:**\n' +
+            '⭐ **Apoiador** - A partir de R$ 5,00\n' +
+            '🥇 **Apoiador Dourado** - R$ 20,00 ou mais\n' +
+            '💎 **Apoiador Diamante** - R$ 50,00 ou mais\n\n' +
             '**Como funciona:**\n' +
             '1️⃣ Clique no link abaixo\n' +
-            '2️⃣ Preencha o formulário com seu ID do Discord\n' +
+            '2️⃣ Preencha com seu ID do Discord\n' +
             '3️⃣ Escolha o valor da doação\n' +
             '4️⃣ Complete o pagamento\n' +
-            '5️⃣ Receba a role Patreon automaticamente!\n\n' +
+            '5️⃣ Receba sua role automaticamente!\n\n' +
             `🔗 **Link:** ${donationUrl}\n\n` +
             '**Como copiar seu ID:**\n' +
-            'Configurações → Avançado → Ativar Modo Desenvolvedor\n' +
-            'Clique com botão direito no seu perfil → Copiar ID do Usuário',
+            'Configurações → Avançado → Modo Desenvolvedor\n' +
+            'Clique direito no seu perfil → Copiar ID',
           footer: { text: 'Obrigado pelo apoio! ❤️' },
           timestamp: new Date().toISOString(),
         };
