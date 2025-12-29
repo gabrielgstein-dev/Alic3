@@ -14,7 +14,6 @@ import {
 import { ConfigService } from '@nestjs/config';
 import { TicketMessageService } from './ticket-message.service';
 import { TicketBuilder } from './ticket-builder';
-import { MemberLookupService } from 'src/shared/services/member-lookup.service';
 
 @Injectable()
 export class TicketInteractionService {
@@ -22,7 +21,6 @@ export class TicketInteractionService {
     private client: Client,
     private configService: ConfigService,
     private ticketMessageService: TicketMessageService,
-    private memberLookup: MemberLookupService,
   ) {}
 
   async handleSelectMenuInteraction(interaction: StringSelectMenuInteraction) {
@@ -184,35 +182,100 @@ export class TicketInteractionService {
     }
   }
 
-  private async removeMemberFromChannel(
+  private async addMemberToChannel(
     interaction: ModalSubmitInteraction,
     memberIdOrTag: string,
   ) {
     try {
-      const members = await this.memberLookup.findMember(
-        interaction.guild,
-        memberIdOrTag,
-      );
+      const guild = interaction.guild;
+      let member;
 
-      if (!members || members.size === 0) {
+      try {
+        member = await guild.members.fetch(memberIdOrTag);
+      } catch {
+        const members = await guild.members.fetch({ query: memberIdOrTag, limit: 10 });
+        
+        if (members.size === 0) {
+          await interaction.editReply({
+            content: 'Membro não encontrado.',
+          });
+          return;
+        }
+
+        if (members.size === 1) {
+          member = members.first();
+        } else {
+          const memberOptions = members
+            .map((m) => `${m.user.tag} (${m.user.id})`)
+            .join('\n');
+
+          await interaction.editReply({
+            content: `Vários membros encontrados. Use o ID do usuário. Membros:\n${memberOptions}`,
+          });
+          return;
+        }
+      }
+
+      if (!member) {
         await interaction.editReply({
           content: 'Membro não encontrado.',
         });
         return;
       }
 
-      if (members.size === 1) {
-        member = members.first();
-      } else {
-        const memberOptions = members
-          .map((m) => `${m.user.tag} (${m.user.id})`)
-          .join('\n');
+      const channel = interaction.channel as TextChannel;
+      
+      await channel.permissionOverwrites.create(member, {
+        ViewChannel: true,
+        SendMessages: true,
+        ReadMessageHistory: true,
+      });
 
-        await interaction.editReply({
-          content: `Vários membros encontrados. Por favor, forneça o discriminador. Nomes encontrados:\n${memberOptions}`,
-        });
-        return;
+      await interaction.editReply({
+        content: `Membro ${member.user.tag} adicionado ao ticket.`,
+      });
+    } catch (error) {
+      console.error('Error adding member:', error);
+      await interaction.editReply({
+        content: 'Falha ao adicionar o membro. Verifique se o ID ou nome está correto.',
+      });
+    }
+  }
+
+  private async removeMemberFromChannel(
+    interaction: ModalSubmitInteraction,
+    memberIdOrTag: string,
+  ) {
+    try {
+      const guild = interaction.guild;
+      let member;
+
+      try {
+        member = await guild.members.fetch(memberIdOrTag);
+      } catch {
+        const members = await guild.members.fetch({ query: memberIdOrTag, limit: 10 });
+        
+        if (members.size === 0) {
+          await interaction.editReply({
+            content: 'Membro não encontrado.',
+          });
+          return;
+        }
+
+        if (members.size === 1) {
+          member = members.first();
+        } else {
+          const memberOptions = members
+            .map((m) => `${m.user.tag} (${m.user.id})`)
+            .join('\n');
+
+          await interaction.editReply({
+            content: `Vários membros encontrados. Use o ID do usuário. Membros:\n${memberOptions}`,
+          });
+          return;
+        }
       }
+
       if (!member) {
         await interaction.editReply({
           content: 'Membro não encontrado.',
@@ -238,15 +301,8 @@ export class TicketInteractionService {
     } catch (error) {
       console.error('Error fetching member:', error);
       await interaction.editReply({
-        content:
-          'Falha ao buscar o membro. Verifique se o ID ou nome está correto.',
+        content: 'Falha ao buscar o membro. Verifique se o ID ou nome está correto.',
       });
     }
   }
-}
-function catchMember(
-  interaction: ModalSubmitInteraction<import('discord.js').CacheType>,
-  memberIdOrTag: string,
-) {
-  throw new Error('Function not implemented.');
 }

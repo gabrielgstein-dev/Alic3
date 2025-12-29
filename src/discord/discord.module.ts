@@ -12,6 +12,7 @@ import { Client, GatewayIntentBits } from 'discord.js';
             GatewayIntentBits.Guilds,
             GatewayIntentBits.GuildMessages,
             GatewayIntentBits.MessageContent,
+            GatewayIntentBits.GuildMembers,
           ],
         });
         return client;

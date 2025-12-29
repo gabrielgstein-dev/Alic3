@@ -6,7 +6,6 @@ import { TicketCloseService } from './services/ticket-close.service';
 import { SourceBinService } from './services/sourcebin.service';
 import { HttpModule } from '@nestjs/axios';
 import { DiscordModule } from '../discord/discord.module';
-import { MemberLookupService } from '../shared/services/member-lookup.service';
 
 @Module({
   imports: [DiscordModule, HttpModule],
@@ -16,7 +15,6 @@ import { MemberLookupService } from '../shared/services/member-lookup.service';
     TicketInteractionService,
     TicketCloseService,
     SourceBinService,
-    MemberLookupService,
   ],
   exports: [TicketsService],
 })

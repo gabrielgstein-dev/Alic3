@@ -4,6 +4,7 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { BotModule } from './bot/bot.module';
 import { TicketsModule } from './tickets/tickets.module';
+import { LivepixModule } from './livepix/livepix.module';
 
 @Module({
   imports: [
@@ -12,6 +13,7 @@ import { TicketsModule } from './tickets/tickets.module';
     }),
     BotModule,
     TicketsModule,
+    LivepixModule,
   ],
   controllers: [AppController],
   providers: [AppService],

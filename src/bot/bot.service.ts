@@ -45,6 +45,32 @@ export class BotService implements OnModuleInit {
       if (message.content === '!ping') {
         message.reply('Pong!');
       }
+      
+      if (message.content === '!donate' || message.content === '!doar') {
+        const baseUrl = this.configService.get<string>('BASE_URL') || 'http://localhost:3000';
+        const donationUrl = `${baseUrl}/livepix/donate`;
+        
+        const embed = {
+          color: 0x667eea,
+          title: '💜 Apoie o Servidor',
+          description:
+            'Faça uma doação e receba a role **Patreon** automaticamente!\n\n' +
+            '**Como funciona:**\n' +
+            '1️⃣ Clique no link abaixo\n' +
+            '2️⃣ Preencha o formulário com seu ID do Discord\n' +
+            '3️⃣ Escolha o valor da doação\n' +
+            '4️⃣ Complete o pagamento\n' +
+            '5️⃣ Receba a role Patreon automaticamente!\n\n' +
+            `🔗 **Link:** ${donationUrl}\n\n` +
+            '**Como copiar seu ID:**\n' +
+            'Configurações → Avançado → Ativar Modo Desenvolvedor\n' +
+            'Clique com botão direito no seu perfil → Copiar ID do Usuário',
+          footer: { text: 'Obrigado pelo apoio! ❤️' },
+          timestamp: new Date().toISOString(),
+        };
+        
+        message.reply({ embeds: [embed] });
+      }
     });
 
     this.client.on('interactionCreate', async (interaction) => {
