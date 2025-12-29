@@ -287,6 +287,23 @@ export class DonateService {
       await member.roles.add(role);
       this.logger.log(`Role ${roleName} adicionada ao usuário ${discordUserId}`);
 
+      const expirationDate = new Date();
+      expirationDate.setDate(expirationDate.getDate() + 30);
+      const expirationDateStr = expirationDate.toLocaleDateString('pt-BR', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric'
+      });
+
+      try {
+        await member.send({
+          content: `🎉 **Obrigado pela sua doação!**\n\n✅ **Transação confirmada com sucesso!**\n💰 **Valor:** R$ ${valueInReais.toFixed(2)}\n🎭 **Role adicionada:** ${roleName}\n📅 **Válida até:** ${expirationDateStr} (30 dias)\n\n*Agradecemos muito pelo seu apoio! Você agora tem acesso aos benefícios exclusivos do nosso servidor.*`,
+        });
+        this.logger.log(`DM enviada para o usuário ${discordUserId}`);
+      } catch (dmError) {
+        this.logger.warn(`Não foi possível enviar DM para o usuário ${discordUserId}: ${dmError.message}`);
+      }
+
       const logChannelId = this.configService.get<string>('DONATION_LOG_CHANNEL_ID');
       if (logChannelId) {
         const logChannel = await this.client.channels.fetch(logChannelId);
