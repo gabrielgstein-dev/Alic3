@@ -1,6 +1,14 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { EmbedBuilder, ColorResolvable, TextChannel } from 'discord.js';
 
+export interface ButtonConfig {
+  label: string;
+  style: 'primary' | 'secondary' | 'success' | 'danger' | 'link';
+  action: 'donation_link' | 'custom_link' | 'custom_action';
+  url?: string;
+  emoji?: string;
+}
+
 export interface EmbedData {
   title?: string;
   description?: string;
@@ -23,6 +31,7 @@ export interface EmbedData {
   }>;
   timestamp?: boolean;
   url?: string;
+  buttons?: ButtonConfig[];
 }
 
 @Injectable()
@@ -104,12 +113,63 @@ export class EmbedBuilderService {
   ): Promise<void> {
     try {
       const embed = this.buildEmbed(embedData);
-      await channel.send({ embeds: [embed] });
+      const components = this.buildButtons(embedData.buttons);
+      
+      await channel.send({ 
+        embeds: [embed],
+        components: components.length > 0 ? components : undefined,
+      });
       this.logger.log(`Embed enviado para o canal ${channel.name}`);
     } catch (error) {
       this.logger.error(`Erro ao enviar embed para o canal ${channel.name}`, error);
       throw error;
     }
+  }
+
+  private buildButtons(buttons?: ButtonConfig[]): any[] {
+    if (!buttons || buttons.length === 0) return [];
+
+    const { ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
+    const components = [];
+    const row = new ActionRowBuilder();
+
+    buttons.forEach((button) => {
+      const buttonBuilder = new ButtonBuilder()
+        .setLabel(button.label)
+        .setStyle(this.getButtonStyle(button.style));
+
+      if (button.emoji) {
+        buttonBuilder.setEmoji(button.emoji);
+      }
+
+      if (button.action === 'donation_link') {
+        buttonBuilder.setCustomId('custom_donation_button');
+      } else if (button.action === 'custom_link' && button.url) {
+        buttonBuilder.setStyle(ButtonStyle.Link).setURL(button.url);
+      } else if (button.action === 'custom_action') {
+        buttonBuilder.setCustomId(`custom_action_${Date.now()}`);
+      }
+
+      row.addComponents(buttonBuilder);
+    });
+
+    if (row.components.length > 0) {
+      components.push(row);
+    }
+
+    return components;
+  }
+
+  private getButtonStyle(style: string): any {
+    const { ButtonStyle } = require('discord.js');
+    const styleMap = {
+      'primary': ButtonStyle.Primary,
+      'secondary': ButtonStyle.Secondary,
+      'success': ButtonStyle.Success,
+      'danger': ButtonStyle.Danger,
+      'link': ButtonStyle.Link,
+    };
+    return styleMap[style] || ButtonStyle.Primary;
   }
 
   validateEmbedData(data: Partial<EmbedData>): { valid: boolean; errors: string[] } {

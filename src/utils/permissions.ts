@@ -44,7 +44,7 @@ export function getPermissionOverwrites(
   return permissionOverwrites;
 }
 
-export function hasStaff(interaction: Interaction) {
+export function hasStaff(interaction: Interaction, staffRoleId?: string, adminRoleId?: string) {
   if (!interaction.member || !interaction.guild) return false;
 
   const member = interaction.guild.members.cache.get(
@@ -52,8 +52,12 @@ export function hasStaff(interaction: Interaction) {
   );
   if (!member) return false;
 
-  const hasStaffRole = member.roles.cache.has(this.staffRoleId);
-  const hasAdminRole = member.roles.cache.has(this.adminRoleId);
+  if (!staffRoleId && !adminRoleId) {
+    return member.permissions.has(PermissionsBitField.Flags.Administrator);
+  }
 
-  return hasStaffRole || hasAdminRole;
+  const hasStaffRole = staffRoleId ? member.roles.cache.has(staffRoleId) : false;
+  const hasAdminRole = adminRoleId ? member.roles.cache.has(adminRoleId) : false;
+
+  return hasStaffRole || hasAdminRole || member.permissions.has(PermissionsBitField.Flags.Administrator);
 }

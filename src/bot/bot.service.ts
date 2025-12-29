@@ -124,25 +124,25 @@ export class BotService implements OnModuleInit {
         interaction.isButton() &&
         interaction.customId === 'add_member'
       ) {
-        if (!hasStaff(interaction)) return;
+        if (!hasStaff(interaction, this.staffRoleId, this.adminRoleId)) return;
         await this.ticketsService.handleAddMember(interaction);
       } else if (
         interaction.isButton() &&
         interaction.customId === 'remove_member'
       ) {
-        if (!hasStaff(interaction)) return;
+        if (!hasStaff(interaction, this.staffRoleId, this.adminRoleId)) return;
         await this.ticketsService.handleRemoveMember(interaction);
       } else if (
         interaction.isModalSubmit() &&
         interaction.customId === 'addMemberModal'
       ) {
-        if (!hasStaff(interaction)) return;
+        if (!hasStaff(interaction, this.staffRoleId, this.adminRoleId)) return;
         await this.ticketsService.handleModalSubmit(interaction);
       } else if (
         interaction.isModalSubmit() &&
         interaction.customId === 'removeMemberModal'
       ) {
-        if (!hasStaff(interaction)) return;
+        if (!hasStaff(interaction, this.staffRoleId, this.adminRoleId)) return;
         await this.ticketsService.handleModalSubmit(interaction);
       } else if (
         interaction.isButton() &&
@@ -157,7 +157,7 @@ export class BotService implements OnModuleInit {
         interaction.isButton() &&
         interaction.customId === 'embed_create_basic'
       ) {
-        if (!hasStaff(interaction)) {
+        if (!hasStaff(interaction, this.staffRoleId, this.adminRoleId)) {
           await interaction.reply({
             content: '❌ Você não tem permissão para usar este comando.',
             ephemeral: true,
@@ -171,10 +171,35 @@ export class BotService implements OnModuleInit {
       ) {
         await this.embedCommand.handleBasicModalSubmit(interaction);
       } else if (
+        interaction.isButton() &&
+        interaction.customId === 'embed_add_donation_button'
+      ) {
+        await this.embedCommand.handleAddDonationButton(interaction);
+      } else if (
+        interaction.isButton() &&
+        interaction.customId === 'embed_skip_buttons'
+      ) {
+        await this.embedCommand.handleSkipButtons(interaction);
+      } else if (
+        interaction.isModalSubmit() &&
+        interaction.customId === 'embed_donation_button_modal'
+      ) {
+        await this.embedCommand.handleDonationButtonModalSubmit(interaction);
+      } else if (
         interaction.isStringSelectMenu() &&
         interaction.customId === 'embed_select_channel'
       ) {
         await this.embedCommand.handleChannelSelect(interaction);
+      } else if (
+        interaction.isButton() &&
+        interaction.customId === 'custom_donation_button'
+      ) {
+        const baseUrl = this.configService.get<string>('BASE_URL') || 'http://localhost:3000';
+        const donationUrl = `${baseUrl}/donate?discord_id=${interaction.user.id}`;
+        await interaction.reply({
+          content: `💜 **Link personalizado para doação:**\n${donationUrl}\n\n✨ Seu Discord ID já está preenchido! Basta escolher o valor.`,
+          ephemeral: true,
+        });
       }
     });
   }

@@ -20,7 +20,7 @@ import { EmbedBuilderService, EmbedData } from './embed-builder.service';
 interface EmbedSession {
   userId: string;
   data: Partial<EmbedData>;
-  step: 'basic' | 'advanced' | 'fields' | 'select_channel' | 'preview';
+  step: 'basic' | 'buttons' | 'select_channel' | 'preview';
 }
 
 @Injectable()
@@ -145,14 +145,110 @@ export class EmbedCommand {
     this.sessions.set(interaction.user.id, {
       userId: interaction.user.id,
       data: embedData,
-      step: 'select_channel',
+      step: 'buttons',
     });
+
+    await this.showButtonConfig(interaction);
+  }
+
+  private async showButtonConfig(interaction: ModalSubmitInteraction): Promise<void> {
+    const row1 = new ActionRowBuilder<ButtonBuilder>().addComponents(
+      new ButtonBuilder()
+        .setCustomId('embed_add_donation_button')
+        .setLabel('➕ Botão de Doação')
+        .setStyle(ButtonStyle.Success),
+      new ButtonBuilder()
+        .setCustomId('embed_skip_buttons')
+        .setLabel('⏭️ Pular Botões')
+        .setStyle(ButtonStyle.Secondary),
+    );
+
+    const session = this.sessions.get(interaction.user.id);
+    const previewEmbed = this.embedBuilderService.buildEmbed(session.data);
+
+    await interaction.reply({
+      content: '🔘 **Configurar Botões**\n\nDeseja adicionar botões à embed?\n\n**Botão de Doação:** Cria um botão que envia link personalizado com Discord ID do usuário.',
+      embeds: [previewEmbed],
+      components: [row1],
+      ephemeral: true,
+    });
+  }
+
+  async handleAddDonationButton(interaction: ButtonInteraction): Promise<void> {
+    const modal = new ModalBuilder()
+      .setCustomId('embed_donation_button_modal')
+      .setTitle('Configurar Botão de Doação');
+
+    const labelInput = new TextInputBuilder()
+      .setCustomId('button_label')
+      .setLabel('Texto do Botão')
+      .setStyle(TextInputStyle.Short)
+      .setPlaceholder('Ex: 💜 Fazer Doação')
+      .setRequired(true)
+      .setMaxLength(80);
+
+    const emojiInput = new TextInputBuilder()
+      .setCustomId('button_emoji')
+      .setLabel('Emoji (opcional)')
+      .setStyle(TextInputStyle.Short)
+      .setPlaceholder('Ex: 💜 ou :heart:')
+      .setRequired(false)
+      .setMaxLength(10);
+
+    modal.addComponents(
+      new ActionRowBuilder<TextInputBuilder>().addComponents(labelInput),
+      new ActionRowBuilder<TextInputBuilder>().addComponents(emojiInput),
+    );
+
+    await interaction.showModal(modal);
+  }
+
+  async handleDonationButtonModalSubmit(interaction: ModalSubmitInteraction): Promise<void> {
+    const label = interaction.fields.getTextInputValue('button_label');
+    const emoji = interaction.fields.getTextInputValue('button_emoji') || undefined;
+
+    const session = this.sessions.get(interaction.user.id);
+    if (!session) {
+      await interaction.reply({
+        content: '❌ Sessão expirada. Por favor, inicie novamente.',
+        ephemeral: true,
+      });
+      return;
+    }
+
+    session.data.buttons = [
+      {
+        label,
+        emoji,
+        style: 'primary',
+        action: 'donation_link',
+      },
+    ];
+
+    session.step = 'select_channel';
+    this.sessions.set(interaction.user.id, session);
+
+    await this.showChannelSelector(interaction);
+  }
+
+  async handleSkipButtons(interaction: ButtonInteraction): Promise<void> {
+    const session = this.sessions.get(interaction.user.id);
+    if (!session) {
+      await interaction.reply({
+        content: '❌ Sessão expirada. Por favor, inicie novamente.',
+        ephemeral: true,
+      });
+      return;
+    }
+
+    session.step = 'select_channel';
+    this.sessions.set(interaction.user.id, session);
 
     await this.showChannelSelector(interaction);
   }
 
   private async showChannelSelector(
-    interaction: ModalSubmitInteraction | StringSelectMenuInteraction,
+    interaction: ModalSubmitInteraction | StringSelectMenuInteraction | ButtonInteraction,
   ): Promise<void> {
     const guild = interaction.guild;
     if (!guild) {
