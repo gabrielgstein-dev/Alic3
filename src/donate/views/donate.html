@@ -391,6 +391,45 @@
     let verifiedUserId = null;
     let verifiedUserData = null;
 
+    function getQueryParam(name) {
+      const urlParams = new URLSearchParams(window.location.search);
+      return urlParams.get(name);
+    }
+
+    async function autoVerifyFromUrl() {
+      const discordId = getQueryParam('discord_id');
+      if (!discordId) return;
+
+      const errorDiv = document.getElementById('error');
+      const loadingDiv = document.getElementById('loading');
+      const step1 = document.getElementById('step1');
+
+      loadingDiv.style.display = 'block';
+      step1.style.display = 'none';
+
+      try {
+        const response = await fetch(`/verify-discord/${discordId}`);
+
+        if (!response.ok) {
+          throw new Error('Usuário não encontrado');
+        }
+
+        const data = await response.json();
+        verifiedUserId = discordId;
+        verifiedUserData = data.user;
+
+        loadingDiv.style.display = 'none';
+        goToStep2(data.user);
+      } catch (error) {
+        errorDiv.textContent = '❌ ' + (error.message || 'Erro ao verificar usuário. Por favor, insira seu ID manualmente.');
+        errorDiv.style.display = 'block';
+        loadingDiv.style.display = 'none';
+        step1.style.display = 'block';
+      }
+    }
+
+    window.addEventListener('DOMContentLoaded', autoVerifyFromUrl);
+
     function goToStep1() {
       document.getElementById('step1').classList.add('active');
       document.getElementById('step2').classList.remove('active');

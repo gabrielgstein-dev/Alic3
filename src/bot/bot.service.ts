@@ -2,6 +2,7 @@ import { Injectable, OnModuleInit, Inject } from '@nestjs/common';
 import { Client, TextChannel } from 'discord.js';
 import { ConfigService } from '@nestjs/config';
 import { TicketsService } from '../tickets/tickets.service';
+import { DonateCommand } from './commands/donate.command';
 import { hasStaff } from 'src/utils/permissions';
 import { clearChannel } from 'src/utils/clearChannel';
 
@@ -15,6 +16,7 @@ export class BotService implements OnModuleInit {
     @Inject(Client) private client: Client,
     private configService: ConfigService,
     private ticketsService: TicketsService,
+    private donateCommand: DonateCommand,
   ) {
     this.ticketChannelId = this.configService.get<string>('TICKET_CHANNEL_ID');
     this.staffRoleId = this.configService.get<string>('STAFF_ROLE_ID');
@@ -120,6 +122,15 @@ export class BotService implements OnModuleInit {
       ) {
         if (!hasStaff(interaction)) return;
         await this.ticketsService.handleModalSubmit(interaction);
+      } else if (
+        interaction.isButton() &&
+        interaction.customId === 'donate_button'
+      ) {
+        const donationUrl = this.donateCommand.getDonationUrl(interaction.user.id);
+        await interaction.reply({
+          content: `💜 **Link personalizado para doação:**\n${donationUrl}\n\n✨ Seu Discord ID já está preenchido! Basta escolher o valor.`,
+          ephemeral: true,
+        });
       }
     });
   }
