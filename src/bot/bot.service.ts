@@ -3,6 +3,7 @@ import { Client, TextChannel } from 'discord.js';
 import { ConfigService } from '@nestjs/config';
 import { TicketsService } from '../tickets/tickets.service';
 import { DonateCommand } from './commands/donate.command';
+import { EmbedCommand } from '../admin/embed/embed.command';
 import { hasStaff } from 'src/utils/permissions';
 import { clearChannel } from 'src/utils/clearChannel';
 
@@ -17,6 +18,7 @@ export class BotService implements OnModuleInit {
     private configService: ConfigService,
     private ticketsService: TicketsService,
     private donateCommand: DonateCommand,
+    private embedCommand: EmbedCommand,
   ) {
     this.ticketChannelId = this.configService.get<string>('TICKET_CHANNEL_ID');
     this.staffRoleId = this.configService.get<string>('STAFF_ROLE_ID');
@@ -46,6 +48,26 @@ export class BotService implements OnModuleInit {
     this.client.on('messageCreate', async (message) => {
       if (message.content === '!ping') {
         message.reply('Pong!');
+      }
+
+      if (message.content === '!embed') {
+        if (!message.member) {
+          message.reply('❌ Este comando só pode ser usado em um servidor.');
+          return;
+        }
+
+        const hasStaffRole = message.member.roles.cache.has(this.staffRoleId);
+        const hasAdminRole = message.member.roles.cache.has(this.adminRoleId);
+        
+        if (!hasStaffRole && !hasAdminRole) {
+          message.reply('❌ Você não tem permissão para usar este comando.');
+          return;
+        }
+        
+        const embedMessage = this.embedCommand.createEmbedBuilderEmbed();
+        await message.channel.send(embedMessage);
+        await message.delete().catch(() => {});
+        return;
       }
       
       if (message.content === '!donate' || message.content === '!doar') {
@@ -131,6 +153,28 @@ export class BotService implements OnModuleInit {
           content: `💜 **Link personalizado para doação:**\n${donationUrl}\n\n✨ Seu Discord ID já está preenchido! Basta escolher o valor.`,
           ephemeral: true,
         });
+      } else if (
+        interaction.isButton() &&
+        interaction.customId === 'embed_create_basic'
+      ) {
+        if (!hasStaff(interaction)) {
+          await interaction.reply({
+            content: '❌ Você não tem permissão para usar este comando.',
+            ephemeral: true,
+          });
+          return;
+        }
+        await this.embedCommand.handleCreateBasic(interaction);
+      } else if (
+        interaction.isModalSubmit() &&
+        interaction.customId === 'embed_modal_basic'
+      ) {
+        await this.embedCommand.handleBasicModalSubmit(interaction);
+      } else if (
+        interaction.isStringSelectMenu() &&
+        interaction.customId === 'embed_select_channel'
+      ) {
+        await this.embedCommand.handleChannelSelect(interaction);
       }
     });
   }
