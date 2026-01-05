@@ -1,0 +1,228 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model UserWebSession {
+  id            String   @id @default(uuid())
+  token         String   @unique
+  userId        String
+  createdAt     DateTime @default(now())
+  refreshedAt   DateTime @default(now())
+  lastUsedAt    DateTime @default(now())
+  tokenType     String
+  accessToken   String
+  expiresIn     Int
+  refreshToken  String
+  scope         String[]
+  cookieSetAt   DateTime @default(now())
+  cookieMaxAge  Int
+
+  @@map("user_web_sessions")
+}
+
+model CachedDiscordUser {
+  id            String   @id
+  username      String
+  discriminator String
+  avatarId      String?
+  globalName    String?
+  banner        String?
+  accentColor   Int?
+  locale        String
+  email         String?
+  verified      Boolean
+  premiumType   Int
+  flags         Int
+  publicFlags   Int
+  updatedAt     DateTime @default(now())
+
+  @@map("cached_discord_users")
+}
+
+enum Platform {
+  PATREON
+  KOFI
+  RSS
+  GITHUB
+  GOOGLE_SHEETS
+}
+
+model ContentFeed {
+  id                String          @id @default(uuid())
+  platform          Platform        @default(PATREON)
+  sourceId          String          @unique
+  creatorName       String
+  creatorUrl        String?
+  description       String?
+  isActive          Boolean         @default(true)
+  checkIntervalMins Int             @default(30)
+  notificationChannelId String
+  lastCheckedAt     DateTime?
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+  posts             PatreonPost[]
+  author            ModAuthor?
+  sheetSnapshots    SheetSnapshot[]
+
+  @@map("content_feeds")
+}
+
+model PatreonPost {
+  id              String           @id @default(uuid())
+  postId          String           @unique
+  feedSourceId    String
+  title           String
+  url             String
+  content         String?
+  postType        String
+  publishedAt     DateTime
+  minCentsPledged Int?
+  isNotified      Boolean          @default(false)
+  
+  analyzed        Boolean          @default(false)
+  needsReview     Boolean          @default(false)
+  rawAiResponse   Json?
+  processingError String?
+  
+  createdAt       DateTime         @default(now())
+  
+  feed            ContentFeed      @relation(fields: [feedSourceId], references: [sourceId])
+  modAppearances  PatreonPostMod[]
+
+  @@index([feedSourceId, publishedAt])
+  @@index([needsReview])
+  @@map("patreon_posts")
+}
+
+model ModAuthor {
+  id                String           @id @default(uuid())
+  name              String
+  slug              String           @unique
+  patreonUrl        String?
+  feedSourceId      String?          @unique
+  curseForgeUrl     String?
+  
+  feed              ContentFeed?     @relation(fields: [feedSourceId], references: [sourceId])
+  mods              Mod[]
+  
+  createdAt         DateTime         @default(now())
+  updatedAt         DateTime         @updatedAt
+  
+  @@map("mod_authors")
+}
+
+model Mod {
+  id                String             @id @default(uuid())
+  authorId          String
+  author            ModAuthor          @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  
+  primaryName       String
+  slug              String             @unique
+  normalizedName    String
+  
+  curseForgeId      String?            @unique
+  curseForgeUrl     String?
+  
+  latestVersion     String?
+  latestVersionNormalized String?
+  latestVersionDate DateTime?
+  
+  translatedVersion String?
+  translatedVersionNormalized String?
+  translationUrl    String?
+  translationDate   DateTime?
+  
+  isUpToDate        Boolean            @default(true)
+  isActive          Boolean            @default(true)
+  
+  aliases           ModAlias[]
+  postAppearances   PatreonPostMod[]
+  linkHistory       ModLinkHistory[]
+  
+  createdAt         DateTime           @default(now())
+  updatedAt         DateTime           @updatedAt
+  
+  @@index([authorId])
+  @@index([normalizedName])
+  @@map("mods")
+}
+
+model ModAlias {
+  id         String   @id @default(uuid())
+  modId      String
+  mod        Mod      @relation(fields: [modId], references: [id], onDelete: Cascade)
+  name       String
+  normalized String
+  
+  createdAt  DateTime @default(now())
+  
+  @@unique([modId, normalized])
+  @@index([normalized])
+  @@map("mod_aliases")
+}
+
+model PatreonPostMod {
+  id              String       @id @default(uuid())
+  postId          String
+  post            PatreonPost  @relation(fields: [postId], references: [postId], onDelete: Cascade)
+  modId           String?
+  mod             Mod?         @relation(fields: [modId], references: [id])
+  
+  detectedName    String
+  normalizedName  String
+  detectedVersion String?
+  normalizedVersion String?
+  isUpdate        Boolean      @default(false)
+  isNewMod        Boolean      @default(false)
+  downloadUrl     String?
+  
+  verified        Boolean      @default(false)
+  needsReview     Boolean      @default(true)
+  confidence      Float        @default(0)
+  
+  discordMessageId String?     @unique
+  discordThreadId  String?
+  expiresAt       DateTime?
+  
+  createdAt       DateTime     @default(now())
+  
+  @@index([postId])
+  @@index([modId])
+  @@index([needsReview])
+  @@index([normalizedName])
+  @@index([downloadUrl])
+  @@map("patreon_post_mods")
+}
+
+model ModLinkHistory {
+  id        String   @id @default(uuid())
+  modId     String
+  mod       Mod      @relation(fields: [modId], references: [id])
+  postModId String?
+  action    String
+  userId    String
+  metadata  Json?
+  
+  createdAt DateTime @default(now())
+  
+  @@index([modId])
+  @@index([userId])
+  @@map("mod_link_history")
+}
+
+model SheetSnapshot {
+  id            String   @id @default(uuid())
+  feedSourceId  String
+  feed          ContentFeed @relation(fields: [feedSourceId], references: [sourceId], onDelete: Cascade)
+  snapshotData  Json
+  
+  createdAt     DateTime @default(now())
+  
+  @@index([feedSourceId])
+  @@map("sheet_snapshots")
+}

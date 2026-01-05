@@ -4,6 +4,7 @@ import { ConfigService } from '@nestjs/config';
 import { TicketsService } from '../tickets/tickets.service';
 import { DonateCommand } from './commands/donate.command';
 import { EmbedCommand } from '../admin/embed/embed.command';
+import { ModManagementCommand } from './commands/mod-management.command';
 import { hasStaff } from 'src/utils/permissions';
 import { clearChannel } from 'src/utils/clearChannel';
 
@@ -19,6 +20,7 @@ export class BotService implements OnModuleInit {
     private ticketsService: TicketsService,
     private donateCommand: DonateCommand,
     private embedCommand: EmbedCommand,
+    private modCommand: ModManagementCommand,
   ) {
     this.ticketChannelId = this.configService.get<string>('TICKET_CHANNEL_ID');
     this.staffRoleId = this.configService.get<string>('STAFF_ROLE_ID');
@@ -98,6 +100,19 @@ export class BotService implements OnModuleInit {
         };
         
         message.reply({ embeds: [embed] });
+      }
+
+      if (message.content.startsWith('!mod')) {
+        const hasStaffRole = message.member?.roles.cache.has(this.staffRoleId);
+        const hasAdminRole = message.member?.roles.cache.has(this.adminRoleId);
+        
+        if (!hasStaffRole && !hasAdminRole) {
+          message.reply('❌ Você não tem permissão para usar este comando.');
+          return;
+        }
+
+        const args = message.content.split(' ').slice(1);
+        await this.modCommand.handleModCommand(message, args);
       }
     });
 
