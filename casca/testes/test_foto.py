@@ -111,3 +111,24 @@ class TestCliFoto(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class TestRegressaoConsoleWindows(unittest.TestCase):
+    """Bug 2026-10-21: o console do Windows (cp1252) quebrava ao imprimir nome de canal com emoji."""
+
+    def test_saida_cp1252_com_emoji_nao_quebra(self):
+        canais = [dict(fx.CANAIS[2], name="💎・apoiadores")]
+        bruto = io.BytesIO()
+        saida = io.TextIOWrapper(bruto, encoding="cp1252")
+        with tempfile.TemporaryDirectory() as d:
+            env = {"DISCORD_TOKEN": "A.B.C", "CASCA_SERVIDOR": fx.SERVIDOR, "CASCA_FOTOS": d}
+            sim = fx.servidor_simulado(canais=canais, bot_perms=fx.perm("EMBED_LINKS"))
+            sim.rotas = [r for r in sim.rotas if "channels" not in r[1].pattern]
+            sim.responder("GET", f"/guilds/{fx.SERVIDOR}/channels", 200,
+                          [dict(c, permission_overwrites=[{"id": fx.SERVIDOR, "type": 0, "allow": "0",
+                                                           "deny": fx.perm("VIEW_CHANNEL")}]) for c in canais])
+            c = main(["foto"], env=env, transporte=sim, saida=saida, erro=io.StringIO(),
+                     caminho_env=Path("/nao/existe"), dormir=lambda s: None)
+        saida.flush()
+        self.assertEqual(c, 0)
+        self.assertIn("apoiadores", bruto.getvalue().decode("utf-8", errors="replace"))

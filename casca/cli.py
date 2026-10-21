@@ -69,6 +69,12 @@ def montar_parser():
 def main(argv=None, env=None, transporte=None, saida=None, erro=None, caminho_env=ENV_PADRAO, dormir=None):
     saida = saida or sys.stdout
     erro = erro or sys.stderr
+    for fluxo in (saida, erro):  # console do Windows (cp1252) não imprime emoji de nome de canal
+        if hasattr(fluxo, "reconfigure"):
+            try:
+                fluxo.reconfigure(encoding="utf-8", errors="replace")
+            except (ValueError, OSError):
+                fluxo.reconfigure(errors="replace")
     args = montar_parser().parse_args(argv)
     try:
         token = ler_token(env, caminho_env)
