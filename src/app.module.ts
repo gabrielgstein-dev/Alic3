@@ -7,8 +7,6 @@ import { TicketsModule } from './tickets/tickets.module';
 import { DonateModule } from './donate/donate.module';
 import { AdminModule } from './admin/admin.module';
 import { AuthModule } from './auth/auth.module';
-import { GuildsModule } from './guilds/guilds.module';
-import { PatreonModule } from './patreon/patreon.module';
 
 @Module({
   imports: [
@@ -20,8 +18,6 @@ import { PatreonModule } from './patreon/patreon.module';
     DonateModule,
     AdminModule,
     AuthModule,
-    GuildsModule,
-    PatreonModule,
   ],
   controllers: [AppController],
   providers: [AppService],
