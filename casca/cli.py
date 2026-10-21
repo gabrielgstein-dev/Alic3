@@ -5,7 +5,9 @@ import sys
 import json
 from pathlib import Path
 
-from casca import estrutura, organizar
+import datetime
+
+from casca import estrutura, organizar, quadro
 from casca.discord_api import Discord, ErroDiscord, TokenAusente, ler_config, ler_token, ENV_PADRAO
 
 
@@ -107,7 +109,73 @@ def cmd_aplicar(ctx):
     return 0
 
 
-COMANDOS = {"eu": cmd_eu, "foto": cmd_foto, "plano": cmd_plano, "aplicar": cmd_aplicar}
+def _canal(ctx, nome):
+    """Canal do servidor configurado cujo nome normalizado é `nome` (exatamente um)."""
+    sid = servidor_configurado(ctx)
+    achados = [c for c in ctx.api.get(f"/guilds/{sid}/channels") if organizar.chave(c.get("name")) == organizar.chave(nome)]
+    if len(achados) != 1:
+        raise FaltaConfig(f"canal '{nome}': {len(achados)} encontrado(s) no servidor configurado (esperado 1)")
+    return achados[0]
+
+
+def _acervo(ctx):
+    caminho = ctx.args.acervo or ctx.config("CASCA_ACERVO")
+    if not caminho:
+        raise FaltaConfig("defina CASCA_ACERVO=<caminho do acervo.json> no .env ou use --acervo")
+    return quadro.carregar_acervo(caminho)
+
+
+def cmd_quadro(ctx):
+    """Monta o quadro de status a partir do acervo e sincroniza com o canal (edita só o que mudou)."""
+    data = ctx.args.data or datetime.date.today().isoformat()
+    mensagens = quadro.renderizar(_acervo(ctx), data)
+    ctx.diz(f"Quadro: {len(mensagens)} mensagem(ns), {sum(len(m['embeds']) for m in mensagens)} bloco(s)")
+    if ctx.args.ensaio:
+        for m in mensagens:
+            for e in m["embeds"]:
+                ctx.diz(f"## {e['title']}")
+                ctx.diz(e["description"])
+        ctx.diz("Ensaio: nada foi alterado.")
+        return 0
+    canal = _canal(ctx, ctx.args.canal)
+    eu = ctx.api.get("/users/@me")
+    r = quadro.sincronizar(ctx.api, canal["id"], eu["id"], mensagens)
+    ctx.diz(f"#{canal['name']}: {r['postadas']} postada(s), {r['editadas']} editada(s), {r['iguais']} igual(is), "
+            f"{r['esvaziadas']} esvaziada(s)")
+    return 0
+
+
+def cmd_aviso(ctx):
+    """Aviso silencioso de tradução publicada (modelo fixo) no canal de novidades."""
+    mods = [m for m in _acervo(ctx) if m["mod"].lower() == ctx.args.mod.lower()]
+    if len(mods) != 1 or not mods[0].get("publicacao_url"):
+        raise FaltaConfig(f"mod '{ctx.args.mod}' não encontrado no acervo ou sem link de publicação")
+    texto = quadro.texto_aviso(mods[0], nova=ctx.args.nova)
+    if ctx.args.ensaio:
+        ctx.diz(texto)
+        return 0
+    canal = _canal(ctx, ctx.args.canal)
+    quadro.postar(ctx.api, canal, texto)
+    ctx.diz(f"#{canal['name']}: {texto}")
+    return 0
+
+
+def cmd_diario(ctx):
+    """Frase curta e silenciosa no diário do tradutor."""
+    frase = " ".join(ctx.args.frase).strip()
+    if not frase or len(frase) > 300:
+        raise FaltaConfig("a frase do diário precisa ter de 1 a 300 caracteres")
+    if ctx.args.ensaio:
+        ctx.diz(frase)
+        return 0
+    canal = _canal(ctx, ctx.args.canal)
+    quadro.postar(ctx.api, canal, frase)
+    ctx.diz(f"#{canal['name']}: {frase}")
+    return 0
+
+
+COMANDOS = {"eu": cmd_eu, "foto": cmd_foto, "plano": cmd_plano, "aplicar": cmd_aplicar, "quadro": cmd_quadro,
+            "aviso": cmd_aviso, "diario": cmd_diario}
 
 
 def montar_parser():
@@ -121,6 +189,21 @@ def montar_parser():
     ap = sub.add_parser("aplicar", help="executa o plano (foto antes, registro de cada operação)")
     ap.add_argument("--alvo", required=True, help="JSON com a estrutura desejada")
     ap.add_argument("--ensaio", action="store_true", help="só mostra o plano, sem escrever nada")
+    q = sub.add_parser("quadro", help="atualiza o quadro de status das traduções")
+    q.add_argument("--canal", default="status-das-traducoes")
+    q.add_argument("--acervo", help="acervo.json (padrão: CASCA_ACERVO do .env)")
+    q.add_argument("--data", help="data do cabeçalho AAAA-MM-DD (padrão: hoje)")
+    q.add_argument("--ensaio", action="store_true", help="só mostra o quadro, sem escrever")
+    av = sub.add_parser("aviso", help="aviso silencioso de tradução publicada")
+    av.add_argument("--mod", required=True, help="Autor/Mod como no acervo")
+    av.add_argument("--nova", action="store_true", help="tradução nova (em vez de atualizada)")
+    av.add_argument("--canal", default="novidades-quentes")
+    av.add_argument("--acervo")
+    av.add_argument("--ensaio", action="store_true")
+    di = sub.add_parser("diario", help="frase curta no diário do tradutor")
+    di.add_argument("frase", nargs="+")
+    di.add_argument("--canal", default="diario-do-tradutor")
+    di.add_argument("--ensaio", action="store_true")
     return p
 
 
@@ -143,7 +226,7 @@ def main(argv=None, env=None, transporte=None, saida=None, erro=None, caminho_en
     api = Discord(token, transporte=transporte, **extra)
     try:
         return COMANDOS[args.comando](Contexto(api, args, saida, erro, env, caminho_env))
-    except (FaltaConfig, organizar.ErroPlano) as e:
+    except (FaltaConfig, organizar.ErroPlano, ValueError) as e:
         print(f"ERRO: {e}", file=erro)
         return 2
     except ErroDiscord as e:
