@@ -210,3 +210,20 @@ class TestCliOrganizar(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class TestRegressaoVozTextoMesmoNome(unittest.TestCase):
+    """Bug 2026-10-21 (alvo real): voz 'Geral' e texto 'geral' tinham a mesma chave e o alvo era recusado."""
+
+    def test_voz_e_texto_com_mesmo_nome_casam_pelo_tipo(self):
+        canais = copy.deepcopy(fx.CANAIS) + [{"id": "500000000000000088", "name": "Geral", "type": 2, "position": 0,
+                                               "parent_id": None, "permission_overwrites": []}]
+        alvo = alvo_igual()
+        alvo["sem_categoria"] = [{"nome": "Geral", "tipo": "voz"}, {"nome": "geral", "tipo": "texto"}]
+        self.assertEqual(organizar.planejar(foto(canais), alvo)["operacoes"], [])
+
+    def test_mesmo_nome_sem_tipo_continua_ambiguo(self):
+        alvo = alvo_igual()
+        alvo["sem_categoria"] = [{"nome": "Geral"}, {"nome": "geral"}]
+        with self.assertRaises(organizar.ErroPlano):
+            organizar.planejar(foto(), alvo)

@@ -43,18 +43,25 @@ def _e_so_leitura(item, servidor_id):
     return any(o["id"] == servidor_id and "SEND_MESSAGES" in o["nega"] for o in item["overwrites"])
 
 
+def grupo(tipo):
+    """Família do tipo para desempatar nomes iguais: voz/palco × o resto. None = qualquer."""
+    if tipo is None:
+        return None
+    return "voz" if tipo in ("voz", "palco") else "texto"
+
+
 def validar_alvo(alvo):
     if not isinstance(alvo, dict) or not alvo.get("servidor") or not isinstance(alvo.get("categorias"), list):
         raise ErroPlano("alvo precisa de 'servidor' e da lista 'categorias'")
     if not alvo.get("arquivo"):
         raise ErroPlano("alvo precisa de 'arquivo' (nome da categoria para onde vão os canais fora do alvo)")
-    vistos = set()
+    vistos = {}
     for cat in alvo["categorias"] + [{"nome": None, "canais": alvo.get("sem_categoria", [])}]:
         for c in cat.get("canais", []):
-            k = chave(c["nome"])
-            if k in vistos:
-                raise ErroPlano(f"canal repetido no alvo: {c['nome']}")
-            vistos.add(k)
+            k, gr = chave(c["nome"]), grupo(c.get("tipo"))
+            if any(g is None or gr is None or g == gr for g in vistos.get(k, [])):
+                raise ErroPlano(f"canal repetido no alvo: {c['nome']} (dê o 'tipo' para diferenciar voz de texto)")
+            vistos.setdefault(k, []).append(gr)
             if c.get("tipo") and c["tipo"] not in TIPO_N:
                 raise ErroPlano(f"tipo desconhecido em {c['nome']}: {c['tipo']}")
 
@@ -71,8 +78,10 @@ def planejar(foto, alvo):
     pode_servidor = set(foto["bot"]["permissoes_servidor"])
     ops, avisos, usados = [], [], set()
 
-    def unico(indice, nome, tipo):
+    def unico(indice, nome, tipo, tipo_spec=None):
         achados = indice.get(chave(nome), [])
+        if tipo_spec:
+            achados = [a for a in achados if grupo(a["tipo"]) == grupo(tipo_spec)]
         if len(achados) > 1:
             raise ErroPlano(f"{tipo} ambíguo: '{nome}' casa com {len(achados)} itens do servidor; renomeie um deles")
         return achados[0] if achados else None
@@ -98,7 +107,7 @@ def planejar(foto, alvo):
     for cat in alvo["categorias"] + [{"nome": None, "canais": alvo.get("sem_categoria", [])}]:
         nomes_ordem = []
         for spec in cat.get("canais", []):
-            atual = unico(canais, spec["nome"], "canal")
+            atual = unico(canais, spec["nome"], "canal", spec.get("tipo"))
             nomes_ordem.append(spec["nome"])
             if atual is None:
                 ops.append({"op": "criar_canal", "nome": spec["nome"], "tipo": spec.get("tipo", "texto"),
